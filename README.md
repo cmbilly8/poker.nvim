@@ -131,21 +131,8 @@ All highlight groups are created lazily the first time the table renders, so set
 
 ## Table Snapshot
 
-```
-┌ Poker.nvim — 6-Max Cash Table ┐
-│ Seat BTN (You)   1450 ⋅ raises to 120 │
-│ Seat SB          880  ⋅ calls        │
-│ Seat BB          1100 ⋅ folds        │
-│ Board: [Ac][Jh][8c]  Pot: 370        │
-│                                             │
-│ Event Feed                                    │
-│ • New hand #184          • BTN dealt Ah Qc    │
-│ • SB posts 10            • BB posts 20        │
-│ • BTN raises to 120      • SB calls 120       │
-└──────────────────────────────────────────────┘
-```
+![Full Board Mode](screenshots/full_view_screenshot.png)
 
-Screenshots/GIFs captured from a live Neovim session look just like the mock above—open an issue or PR if you'd like to contribute additional artwork.
 
 ## Scores, Logs & Exports
 
