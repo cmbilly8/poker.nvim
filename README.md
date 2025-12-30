@@ -2,6 +2,8 @@
 
 Poker.nvim brings a fully playable No-Limit Texas Hold'em table to your Neovim session. Launch a popup, battle multiple AI opponents with realistic side-pot logic, log every hand for later study, and plug in your own poker bot without leaving your editor.
 
+Aside from this line, this project was built entirely using AI coding agents, so expect to encounter the occasional bug.
+
 ## Feature Highlights
 
 - Terminal-native table with rotating dealer button, timers, and an event feed that mirrors casino-style log lines.
