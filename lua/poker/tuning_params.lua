@@ -1,0 +1,18 @@
+return {
+  bluff_ratio = 1.000000,
+  learning_rate = 0.050000,
+  three_bet_value_freq = 0.087235,
+  flop_call_freq = 0.694898,
+  river_fold_freq = 0.242703,
+  turn_fold_freq = 0.218624,
+  flop_fold_freq = 0.192701,
+  probe_freq = 0.200000,
+  call_freq = 0.160000,
+  river_raise_freq = 0.132921,
+  flop_raise_freq = 0.112401,
+  turn_raise_freq = 0.116839,
+  three_bet_bluff_freq = 0.044836,
+  turn_call_freq = 0.664536,
+  river_call_freq = 0.624376,
+  open_raise_freq = 0.187235,
+}

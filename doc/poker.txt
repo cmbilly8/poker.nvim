@@ -1,0 +1,184 @@
+*poker.nvim.txt*                                            Last change: 2024-05-04
+
+==============================================================================
+INTRODUCTION                                                     *poker.nvim*
+
+Poker.nvim renders a complete No-Limit Texas Hold'em table inside a floating
+window. Launch the table with `:Poker`, battle up to six AI opponents, export
+hand histories, and inject your own decision engine without leaving Neovim.
+
+Requirements: Neovim >= 0.5.0 and plenary.nvim (popup/path helpers).
+
+==============================================================================
+CONTENTS                                                   *poker.nvim-table*
+
+    1. Introduction ................................. |poker.nvim|
+    2. Setup ........................................ |poker.nvim-setup|
+    3. Commands ..................................... |poker.nvim-commands|
+    4. Keymaps ...................................... |poker.nvim-keymaps|
+    5. Highlight Groups ............................. |poker.nvim-highlights|
+    6. Scores & Exports ............................. |poker.nvim-exports|
+    7. AI Hooks ..................................... |poker.nvim-ai|
+    8. Simulator & Tuning ........................... |poker.nvim-tuning|
+    9. Helptags ..................................... |poker.nvim-helptags|
+
+==============================================================================
+SETUP                                                         *poker.nvim-setup*
+
+Call `require('poker').setup({ ... })` from your plugin manager. All options
+are optional; unspecified settings fall back to sane defaults.
+
+    require('poker').setup({
+      suit_style = 'black',       -- 'black' or 'white' card suit glyphs
+      starting_stack = 1000,      -- per-seat buy-in
+      small_blind = 10,           -- amount posted by SB every hand
+      big_blind = 20,             -- amount posted by BB every hand
+      ai_opponents = 6,           -- seats filled with built-in AI
+      scores_path = nil,          -- override scoreboard JSON path
+      table_name = 'Poker.nvim',  -- surfaced in exports/logs
+      enable_exports = false,     -- opt-in ACPC/PokerStars file writes
+      export_acpc_path = nil,     -- defaults to stdpath('data')/poker/acpc.log
+      export_pokerstars_dir = nil,-- defaults to stdpath('data')/poker/pokerstars
+      keybindings = {
+        primary = 'j',            -- advance/check/call/next hand
+        secondary = 'k',          -- fold / skip AI timers / close finished hand
+        bet = 'l',                -- prompt for bet/raise amount
+        quit = 'q',               -- close the popup immediately
+      },
+    })
+
+`keybindings` may be any table with some/all of the keys shown above. See
+|poker.nvim-keymaps| for details.
+
+==============================================================================
+COMMANDS                                                   *poker.nvim-commands*
+
+All commands are created once you call `require('poker').setup()`.
+
+    :Poker                Open the popup and deal a fresh hand.
+    :PokerPrimary         Context-sensitive "go" action:
+                            - Skip AI timers during their turns.
+                            - Check/call when it's your turn.
+                            - Deal the next hand once the current one ends.
+    :PokerSecondary       Fold during play, fast-forward through AI actions,
+                          or close the popup after a hand finishes.
+    :PokerBet             Prompt for a bet/raise amount when betting is legal.
+    :PokerQuit            Close the popup immediately.
+    :PokerResetScores     Delete the persisted scoreboard JSON file.
+
+==============================================================================
+KEYMAPS                                                     *poker.nvim-keymaps*
+
+Poker.nvim binds buffer-local mappings inside the popup. Default keys:
+
+    j   Invoke :PokerPrimary
+    k   Invoke :PokerSecondary
+    l   Invoke :PokerBet
+    q   Invoke :PokerQuit
+
+Use `require('poker').setup({ keybindings = { ... } })` or call
+`require('poker.utils').apply_keybindings` directly to override them. Mappings
+are set with `noremap = true`, `silent = true`, and `nowait = true`.
+
+==============================================================================
+HIGHLIGHT GROUPS                                         *poker.nvim-highlights*
+
+Poker.nvim defines highlight groups so you can recolor the table:
+
+    PokerWindow               Popup border/title highlight group.
+    PokerStatusFold           "fold" status text (defaults to #ff6b6b).
+    PokerStatusCheck          "check" status text (defaults to #ffd166).
+    PokerStatusBet            "bet"/"raise" text (defaults to #06d6a0).
+    PokerStatusCall           "call" text (defaults to #118ab2).
+    PokerStatusWin            Winner labels and payout rows.
+    PokerCardRed              Hearts/diamonds suit glyphs on cards.
+    PokerPlayerWinBorder      Border tint for winning player card frames.
+    PokerPlayerFoldBorder     Border tint for folded player frames.
+    PokerPlayerActiveBorder   Marker around the seat whose action it is.
+
+Use `:highlight PokerStatusWin guifg=#00ff9d` (or Vimscript equivalents) to
+override any color. All highlight groups are created lazily the first time the
+window renders, so custom colors should be applied during your config stage.
+
+==============================================================================
+SCORES & EXPORTS                                           *poker.nvim-exports*
+
+Scores are stored at `stdpath('data') .. '/pokerscores.json'` by default.
+Invoke `:PokerResetScores` to clear the file or supply `scores_path` during
+setup to point to your own location.
+
+Hand history exports are disabled unless `enable_exports = true`. When enabled:
+
+    ACPC logs .............. stdpath('data')/poker/acpc.log
+    PokerStars format ...... stdpath('data')/poker/pokerstars/
+
+Both destinations are configurable (see |poker.nvim-setup|). You may also
+register a callback with:
+
+    local match = require('poker.match')
+    match.set_on_hand_complete(function(hand_state)
+      -- serialize via poker.export.acpc / poker.export.pokerstars
+    end)
+
+==============================================================================
+AI HOOKS                                                         *poker.nvim-ai*
+
+The built-in AI reads a detailed match state before acting, but you are free
+to replace it. Require `poker.ai`, override `ai.decide(player, state)`, and
+return `"fold"`, `"check"`, `"call"`, `"bet"`, or `"raise"` as appropriate.
+
+Utility helpers exposed by `poker.match`:
+
+    match.get_board()          Copy of community cards revealed so far.
+    match.get_players()        Per-seat snapshot (name, stack, bet, status).
+    match.get_my_cards()       Current hero hole cards.
+    match.get_state(player)    Rich state (seat/position/blinds/pot odds/etc.)
+                               passed to the AI before every decision.
+    match.available_actions(player)
+                               Array of legal moves for a seat.
+
+==============================================================================
+SIMULATOR & TUNING                                         *poker.nvim-tuning*
+
+Dependencies: a system `lua` interpreter (5.1+ or LuaJIT) and this repository
+cloned locally so the helper scripts can update `package.path`.
+
+1. **Generate ACPC logs**
+        ./scripts/run_simulator.sh
+   This bootstraps `tests.helpers.mock_vim`, calls `poker.simulator.run`,
+   and writes a timestamped ACPC log beneath `data/sim/`. Pass a numeric
+   argument to `run_batch.sh` for repeated runs (e.g. `./run_batch.sh 10`).
+
+2. **Parse logs into counts**
+        lua lua/poker/parse_log.lua data/sim/acpc_sim_1234.log
+   Produces `observed_freq.json` (raw counts per street) and `analysis.json`
+   (normalized percentages + totals). Both files land in the repo root and
+   are ignored by git along with the `tuning_history/` snapshots produced in
+   later steps.
+
+3. **Update tuning parameters**
+        TUNER_ITER=5 lua lua/poker/run_tuner.lua
+   The tuner compares `observed_freq.json` against
+   `lua/poker/target_frequencies.lua`, rewrites
+   `lua/poker/tuning_params.lua`, and stores a snapshot under
+   `tuning_history/iter_0005.json`.
+
+4. **Interpret results**
+   Inspect `analysis.json` to see how closely each street matches the desired
+   frequencies, consult `observed_freq.json` to confirm sample sizes, and
+   rerun the simulator until the deltas are acceptable.
+
+Future contributor docs will cover advanced tuning pipelines, but the steps
+above are enough to reproduce the current AI heuristics.
+
+==============================================================================
+HELPTAGS                                                   *poker.nvim-helptags*
+
+After installing the plugin, generate helptags so `:help poker.nvim` resolves:
+
+    :helptags ~/.local/share/nvim/site/pack/packer/start/poker.nvim/doc
+
+(Replace the path with wherever poker.nvim lives on your system.)
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:

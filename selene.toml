@@ -1,0 +1,10 @@
+std = "neovim"
+
+[rules]
+global_usage = "allow"
+
+[lints]
+mixed_table = "allow"
+
+[files]
+include = ["lua/**/*.lua", "after/**/*.lua", "plugin/**/*.lua", "tests/**/*.lua"]
